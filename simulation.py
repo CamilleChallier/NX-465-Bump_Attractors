@@ -29,6 +29,29 @@ def oscillating_input(t, omega=ct.omega, I_0=ct.I_0):
 
     return I
 
+def external_input(t,x, mu1=ct.mu1, mu2=ct.mu2, sigma=ct.sigma):
+    """
+    Compute the input current for the neurons.
+
+    Parameters:
+    - t (ndarray): time points.
+    - x (ndarray): Neuron positions.
+    - mu1 (float): Mean of the first Gaussian.
+    - mu2 (float): Mean of the second Gaussian.
+    - sigma (float): Standard deviation of the Gaussians.
+
+    Returns:
+    - I (ndarray): input current for the neurons.
+    """
+    if 300<=t<400 :
+        I  = 1/(sigma * np.sqrt(2 * np.pi)) * np.exp(-((x - mu1) ** 2 / (2*sigma**2)))
+        
+    elif 600<=t<700 :
+        I  = 1/(sigma * np.sqrt(2 * np.pi)) * np.exp(-((x - mu2) ** 2 / (2*sigma**2)))
+    else :
+        I = 0
+    return I
+
 def recurrent_interactions_input(x, S, J=ct.J):
     """
     Compute the input current for the neurons based on recurrent interactions.
@@ -48,7 +71,7 @@ def recurrent_interactions_input(x, S, J=ct.J):
     return I
 
 
-def spike_simulation(input_fct, initial_voltage, N=ct.N, delta_t=ct.delta_t, tau=ct.tau, T=ct.T, R=ct.R, r_0=ct.r_0, alpha=ct.alpha, beta=ct.beta, theory = False, J=None, omega=None, I_0=None) : 
+def spike_simulation(input_fct, initial_voltage, N=ct.N, delta_t=ct.delta_t, tau=ct.tau, T=ct.T, R=ct.R, r_0=ct.r_0, alpha=ct.alpha, beta=ct.beta, J=None, omega=None, I_0=None, theory = False, I_ext=False) : 
     """
     Simulates spike generation in a population of neurons.
 
@@ -76,12 +99,16 @@ def spike_simulation(input_fct, initial_voltage, N=ct.N, delta_t=ct.delta_t, tau
 
     for t in tqdm(range(h.shape[0]-1)):
         
+        #compute current
         if input_fct == oscillating_input:
             I = input_fct(t*delta_t, omega, I_0)
         elif input_fct == recurrent_interactions_input:
             I = input_fct(x, s[t]/delta_t, J)
         else:
             ValueError("Input function not recognized.")
+        if I_ext:
+            I += external_input(t*delta_t, x)
+            
         h[t+1] = h[t] + delta_t/tau * (-h[t] + R * I)
         r[t+1] = r_0 * g(h[t+1], alpha, beta)
         s[t+1] = np.random.binomial(1, r[t+1] * delta_t)

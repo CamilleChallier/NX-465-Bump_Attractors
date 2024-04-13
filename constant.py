@@ -1,3 +1,4 @@
+import numpy as np
 alpha = 2 #V-1
 beta=0.5 #V
 N=300
@@ -10,3 +11,6 @@ I_0=2 #nA
 omega=1 #ms-1
 
 J = 5 #pC
+mu1 = 2*np.pi/3
+mu2 = 4*np.pi/3
+sigma = np.pi/8
