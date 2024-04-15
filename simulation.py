@@ -114,7 +114,8 @@ def spike_simulation(input_fct, initial_voltage, N=ct.N, delta_t=ct.delta_t, tau
         s[t+1] = np.random.binomial(1, r[t+1] * delta_t)
         
     if theory :
-        return h, r
+        print("theory")
+        return h, r*delta_t
     else :
         return h, s
     
