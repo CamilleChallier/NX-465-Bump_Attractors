@@ -14,3 +14,7 @@ J = 5 #pC
 mu1 = 2*np.pi/3
 mu2 = 4*np.pi/3
 sigma = np.pi/8
+
+J0 = 5
+J1 = 5
+sigma_w = 0.1

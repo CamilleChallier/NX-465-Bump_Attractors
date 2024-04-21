@@ -70,8 +70,35 @@ def recurrent_interactions_input(x, S, J=ct.J):
     
     return I
 
+def recurrent_interactions_input(x, S, J=ct.J, phi = 0):
+    """
+    Compute the input current for the neurons based on recurrent interactions with a small angle phi.
 
-def spike_simulation(input_fct, initial_voltage, N=ct.N, delta_t=ct.delta_t, tau=ct.tau, T=ct.T, R=ct.R, r_0=ct.r_0, alpha=ct.alpha, beta=ct.beta, J=None, omega=None, I_0=None, theory = False, I_ext=False) : 
+    Parameters:
+    - x (ndarray): Neuron positions.
+    - S (ndarray): Spike trains of the neurons.
+    - J (float): Interaction strength.
+
+    Returns:
+    - I (ndarray): Input current for the neurons.
+    """
+    mc = np.mean(np.cos(x)*S)
+    ms = np.mean(np.sin(x)*S)
+    I = J * (np.cos(x-phi) * mc + np.sin(x-phi) * ms)
+    print(I)
+    
+    return I
+
+def line_input(x, S, J, J0, J1, sigma_w):
+
+    sum_J0 =J0*np.sum(S)
+    gaussian = J1*np.sum(np.exp((-(x-x.T)**2)/(2*sigma_w**2)), axis = 0)
+    I = J/len(x) * (sum_J0 + gaussian)
+    # print(I)
+    return I
+
+
+def spike_simulation(input_fct, initial_voltage, N=ct.N, delta_t=ct.delta_t, tau=ct.tau, T=ct.T, R=ct.R, r_0=ct.r_0, alpha=ct.alpha, beta=ct.beta, J0= ct.J0, J1 = ct.J1, sigma_w = ct.sigma_w, phi = 0,  J=ct.J, omega=None, I_0=None, theory = False, I_ext=False) : 
     """
     Simulates spike generation in a population of neurons.
 
@@ -103,9 +130,13 @@ def spike_simulation(input_fct, initial_voltage, N=ct.N, delta_t=ct.delta_t, tau
         if input_fct == oscillating_input:
             I = input_fct(t*delta_t, omega, I_0)
         elif input_fct == recurrent_interactions_input:
-            I = input_fct(x, s[t]/delta_t, J)
+            I = input_fct(x, s[t]/delta_t, J, phi)
+        elif input_fct == line_input:
+            I = input_fct(x.reshape(-1,1), s[t]/delta_t, J, J0, J1, sigma_w)   
+    
         else:
             ValueError("Input function not recognized.")
+            
         if I_ext:
             I += external_input(t*delta_t, x)
             
