@@ -85,16 +85,24 @@ def recurrent_interactions_input(x, S, J=ct.J, phi = 0):
     mc = np.mean(np.cos(x)*S)
     ms = np.mean(np.sin(x)*S)
     I = J * (np.cos(x-phi) * mc + np.sin(x-phi) * ms)
-    print(I)
+    # print(I)
     
     return I
 
 def line_input(x, S, J, J0, J1, sigma_w):
 
-    sum_J0 =J0*np.sum(S)
-    gaussian = J1*np.sum(np.exp((-(x-x.T)**2)/(2*sigma_w**2)), axis = 0)
-    I = J/len(x) * (sum_J0 + gaussian)
-    # print(I)
+
+    gaussian = J0 + J1*np.exp((-(x-x.T)**2)/(2*sigma_w**2))
+    # print(gaussian.shape, S.shape)
+    I = J/len(x) * gaussian @ S
+    # print(gaussian[0,0:5])
+    # print(np.mean(gaussian))
+    # print((gaussian*S).shape)
+    # print(I[0])
+    
+    # pre = np.cos(x-x.T)
+    # I = J/len(x) * pre @ S
+    # print(pre)
     return I
 
 
