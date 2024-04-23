@@ -18,3 +18,5 @@ sigma = np.pi/8
 J0 = 5
 J1 = 5
 sigma_w = 0.1
+
+theta = 10*np.pi/180

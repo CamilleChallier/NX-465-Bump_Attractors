@@ -13,151 +13,273 @@ def g(h, alpha=ct.alpha, beta=ct.beta):
 
     return 1/(1 + np.exp(-2 * alpha * (h - beta)))
 
-def oscillating_input(t, omega=ct.omega, I_0=ct.I_0):
-    """
-    Compute the input current for the neurons.
+class PoissonNeuron:
+    def __init__(self, N=ct.N, delta_t=ct.delta_t, tau=ct.tau, T=ct.T, R=ct.R, r_0=ct.r_0, alpha=ct.alpha, beta=ct.beta, J0=ct.J0, J1=ct.J1, sigma_w=ct.sigma_w, phi=0, J=ct.J, omega=None, I_0=None, mu1=ct.mu1, mu2=ct.mu2, sigma=ct.sigma, I_ext=False):
+        self.N = N
+        self.delta_t = delta_t
+        self.tau = tau
+        self.T = T
+        self.R = R
+        self.r_0 = r_0
+        self.alpha = alpha
+        self.beta = beta
+        self.J0 = J0
+        self.J1 = J1
+        self.sigma_w = sigma_w
+        self.phi = phi
+        self.J = J
+        self.omega = omega
+        self.I_0 = I_0
+        self.mu1=mu1
+        self.mu2=mu2
+        self.sigma=sigma
+        self.I_ext = I_ext
 
-    Parameters:
-    - t (ndarray): time points.
-    - omega (float): Frequency of the input current.
-    - I_0 (float): Amplitude of the input current.
+    def oscillating_input(self, t):
+        """
+        Compute the input current for the neurons.
 
-    Returns:
-    - I (ndarray): input current for the neurons.
-    """
-    I = I_0 * np.sin(omega * t)
+        Parameters:
+        - t (ndarray): time points.
+        - omega (float): Frequency of the input current.
+        - I_0 (float): Amplitude of the input current.
 
-    return I
+        Returns:
+        - I (ndarray): input current for the neurons.
+        """
+        I = self.I_0 * np.sin(self.omega * t)
 
-def external_input(t,x, mu1=ct.mu1, mu2=ct.mu2, sigma=ct.sigma):
-    """
-    Compute the input current for the neurons.
+        return I
 
-    Parameters:
-    - t (ndarray): time points.
-    - x (ndarray): Neuron positions.
-    - mu1 (float): Mean of the first Gaussian.
-    - mu2 (float): Mean of the second Gaussian.
-    - sigma (float): Standard deviation of the Gaussians.
+    def external_input(self, t):
+        """
+        Compute the input current for the neurons.
 
-    Returns:
-    - I (ndarray): input current for the neurons.
-    """
-    if 300<=t<400 :
-        I  = 1/(sigma * np.sqrt(2 * np.pi)) * np.exp(-((x - mu1) ** 2 / (2*sigma**2)))
-        
-    elif 600<=t<700 :
-        I  = 1/(sigma * np.sqrt(2 * np.pi)) * np.exp(-((x - mu2) ** 2 / (2*sigma**2)))
-    else :
-        I = 0
-    return I
+        Parameters:
+        - t (ndarray): time points.
+        - x (ndarray): Neuron positions.
+        - mu1 (float): Mean of the first Gaussian.
+        - mu2 (float): Mean of the second Gaussian.
+        - sigma (float): Standard deviation of the Gaussians.
 
-def recurrent_interactions_input(x, S, J=ct.J):
-    """
-    Compute the input current for the neurons based on recurrent interactions.
-
-    Parameters:
-    - x (ndarray): Neuron positions.
-    - S (ndarray): Spike trains of the neurons.
-    - J (float): Interaction strength.
-
-    Returns:
-    - I (ndarray): Input current for the neurons.
-    """
-    mc = np.mean(np.cos(x)*S)
-    ms = 1/len(x)*(np.sin(x)@S)
-    I = J * (np.cos(x) * mc + np.sin(x) * ms)
-    
-    return I
-
-def recurrent_interactions_input(x, S, J=ct.J, phi = 0):
-    """
-    Compute the input current for the neurons based on recurrent interactions with a small angle phi.
-
-    Parameters:
-    - x (ndarray): Neuron positions.
-    - S (ndarray): Spike trains of the neurons.
-    - J (float): Interaction strength.
-
-    Returns:
-    - I (ndarray): Input current for the neurons.
-    """
-    mc = np.mean(np.cos(x)*S)
-    ms = np.mean(np.sin(x)*S)
-    I = J * (np.cos(x-phi) * mc + np.sin(x-phi) * ms)
-    # print(I)
-    
-    return I
-
-def line_input(x, S, J, J0, J1, sigma_w):
-
-
-    gaussian = J0 + J1*np.exp((-(x-x.T)**2)/(2*sigma_w**2))
-    # print(gaussian.shape, S.shape)
-    I = J/len(x) * gaussian @ S
-    # print(gaussian[0,0:5])
-    # print(np.mean(gaussian))
-    # print((gaussian*S).shape)
-    # print(I[0])
-    
-    # pre = np.cos(x-x.T)
-    # I = J/len(x) * pre @ S
-    # print(pre)
-    return I
-
-
-def spike_simulation(input_fct, initial_voltage, N=ct.N, delta_t=ct.delta_t, tau=ct.tau, T=ct.T, R=ct.R, r_0=ct.r_0, alpha=ct.alpha, beta=ct.beta, J0= ct.J0, J1 = ct.J1, sigma_w = ct.sigma_w, phi = 0,  J=ct.J, omega=None, I_0=None, theory = False, I_ext=False) : 
-    """
-    Simulates spike generation in a population of neurons.
-
-    Parameters:
-    - N (int): Number of neurons in the population.
-    - delta_t (float): Time step size for simulation.
-    - tau (float): Membrane time constant.
-    - T (float): Total simulation time.
-    - R (float): Resistance of the neuron.
-
-    Returns:
-    - h (ndarray): membrane potential of each neuron over time.
-    - mean_spikes (ndarray): mean spike occurence over 1 ms bins.
-    """
-    h = np.zeros((int(T/delta_t), N)) # e.g. (10000, 100)
-    r = np.zeros((int(T/delta_t), N))
-    s = np.zeros((int(T/delta_t), N))
-    
-    # Initialize the position of each neuron
-    x = np.linspace(0, 2*np.pi, N)
-    
-    h[0, :] = initial_voltage 
-    r[0, :] = r_0 * g(h[0, :], alpha, beta)
-    s[0, :] =  np.random.binomial(1,r[0] * delta_t)
-
-    for t in tqdm(range(h.shape[0]-1)):
-        
-        #compute current
-        if input_fct == oscillating_input:
-            I = input_fct(t*delta_t, omega, I_0)
-        elif input_fct == recurrent_interactions_input:
-            I = input_fct(x, s[t]/delta_t, J, phi)
-        elif input_fct == line_input:
-            I = input_fct(x.reshape(-1,1), s[t]/delta_t, J, J0, J1, sigma_w)   
-    
-        else:
-            ValueError("Input function not recognized.")
+        Returns:
+        - I (ndarray): input current for the neurons.
+        """
+        if 300<=t<400 :
+            I  = 1/(self.sigma * np.sqrt(2 * np.pi)) * np.exp(-((self.x - self.mu1) ** 2 / (2*self.sigma**2)))
             
-        if I_ext:
-            I += external_input(t*delta_t, x)
-            
-        h[t+1] = h[t] + delta_t/tau * (-h[t] + R * I)
-        r[t+1] = r_0 * g(h[t+1], alpha, beta)
-        s[t+1] = np.random.binomial(1, r[t+1] * delta_t)
+        elif 600<=t<700 :
+            I  = 1/(self.sigma * np.sqrt(2 * np.pi)) * np.exp(-((self.x - self.mu2) ** 2 / (2*self.sigma**2)))
+        else :
+            I = 0
+        return I
+
+    def recurrent_interactions_input(self, S):
+        """
+        Compute the input current for the neurons based on recurrent interactions.
+
+        Parameters:
+        - x (ndarray): Neuron positions.
+        - S (ndarray): Spike trains of the neurons.
+        - J (float): Interaction strength.
+
+        Returns:
+        - I (ndarray): Input current for the neurons.
+        """
+        mc = np.mean(np.cos(self.x)*S)
+        ms = 1/len(self.x)*(np.sin(self.x)@S)
+        I = self.J * (np.cos(self.x) * mc + np.sin(self.x) * ms)
         
-    if theory :
-        print("theory")
-        return h, r*delta_t
-    else :
-        return h, s
+        return I
+
+    def recurrent_interactions_input(self, S):
+        """
+        Compute the input current for the neurons based on recurrent interactions with a small angle phi.
+
+        Parameters:
+        - x (ndarray): Neuron positions.
+        - S (ndarray): Spike trains of the neurons.
+        - J (float): Interaction strength.
+
+        Returns:
+        - I (ndarray): Input current for the neurons.
+        """
+        mc = np.mean(np.cos(self.x)*S)
+        ms = np.mean(np.sin(self.x)*S)
+        I = self.J * (np.cos(self.x-self.phi) * mc + np.sin(self.x-self.phi) * ms)
+        # print(I)
+        
+        return I
+
+    def line_input(self, x, S):
+
+
+        gaussian = self.J0 + self.J1*np.exp((-(x-x.T)**2)/(2*self.sigma_w**2))
+        # print(gaussian.shape, S.shape)
+        I = self.J/len(x) * gaussian @ S
+        # print(gaussian[0,0:5])
+        # print(np.mean(gaussian))
+        # print((gaussian*S).shape)
+        # print(I[0])
+        
+        # pre = np.cos(x-x.T)
+        # I = J/len(x) * pre @ S
+        # print(pre)
+        return I
+
+
+    def spike_simulation(self, input_fct, initial_voltage, theory = False) : 
+        """
+        Simulates spike generation in a population of neurons.
+
+        Parameters:
+        - N (int): Number of neurons in the population.
+        - delta_t (float): Time step size for simulation.
+        - tau (float): Membrane time constant.
+        - T (float): Total simulation time.
+        - R (float): Resistance of the neuron.
+
+        Returns:
+        - h (ndarray): membrane potential of each neuron over time.
+        - mean_spikes (ndarray): mean spike occurence over 1 ms bins.
+        """
+        self.h = np.zeros((int(self.T / self.delta_t), self.N))
+        self.r = np.zeros((int(self.T / self.delta_t), self.N))
+        self.s = np.zeros((int(self.T / self.delta_t), self.N))
+
+        self.x = np.linspace(0, 2*np.pi, self.N)
+
+        self.h[0, :] = initial_voltage
+        self.r[0, :] = self.r_0 * g(self.h[0, :])
+        self.s[0, :] = np.random.binomial(1, self.r[0] * self.delta_t)
+
+
+        for t in tqdm(range(self.h.shape[0]-1)):
+            
+            #compute current
+            if input_fct == self.oscillating_input:
+                I = input_fct(t*self.delta_t)
+            elif input_fct == self.recurrent_interactions_input:
+                I = input_fct(self.s[t]/self.delta_t)
+            elif input_fct == self.line_input:
+                I = input_fct(self.x.reshape(-1,1), self.s[t]/self.delta_t)   
+        
+            else:
+                ValueError("Input function not recognized.")
+                
+            if self.I_ext:
+                I += self.external_input(t*self.delta_t)
+                
+            self.h[t+1] = self.h[t] + self.delta_t/self.tau * (-self.h[t] + self.R * I)
+            self.r[t+1] = self.r_0 * g(self.h[t+1], self.alpha, self.beta)
+            self.s[t+1] = np.random.binomial(1, self.r[t+1] * self.delta_t)
+            
+        if theory :
+            print("theory")
+            return self.h, self.r*self.delta_t
+        else :
+            return self.h, self.s
+
+class TwoPopulationSimulation:
+    def __init__(self, N=ct.N, delta_t=ct.delta_t, tau=ct.tau, T=ct.T, R=ct.R, r_0=ct.r_0, alpha=ct.alpha, beta=ct.beta, J=ct.J, theta=ct.theta, I0 = 0, I_ext=False):
+        self.N = N
+        self.delta_t = delta_t
+        self.tau = tau
+        self.T = T
+        self.R = R
+        self.r_0 = r_0
+        self.alpha = alpha
+        self.beta = beta
+        self.J = J
+        self.theta = theta
+        self.I_ext = I_ext
+        self.I0 = I0
+        
+    def initialize_simulation(self):
+        h = np.zeros((int(self.T/self.delta_t), self.N))
+        r = np.zeros((int(self.T/self.delta_t), self.N))
+        s = np.zeros((int(self.T/self.delta_t), self.N))
+        
+        return h, r, s
     
+    def initialize_positions(self):
+        x = np.linspace(0, 2*np.pi, self.N)
+        return x
+    
+    def uniform_voltage(self):
+        return np.random.uniform(0, 1, self.N) 
+    
+    def centered_voltage(self):
+        ## TODO : to implement
+        initial_voltage = np.linspace(0, 1, self.N)
+        initial_voltage = 1 / (0.25*np.sqrt(2 * np.pi)) * np.exp(-0.5 * ((initial_voltage - 0.5) / 0.25) ** 2)
+        initial_voltage = initial_voltage / np.max(initial_voltage)
+        initial_voltage += np.random.uniform(-0.1, 0.1, self.N)
+        return initial_voltage
+
+    
+    def first_step_update(self, initial_voltage):
+        h0 =  initial_voltage()
+        r0 = self.r_0 * g(h0, self.alpha, self.beta)
+        s0 =  np.random.binomial(1,r0 * self.delta_t)
+        
+        return h0, r0, s0
+    
+    def update(self, t, IL, IR):
+
+        self.hL[t+1] = self.hL[t] + self.delta_t/self.tau * (-self.hL[t] + self.R * IL)
+        self.rL[t+1] = self.r_0 * g(self.hL[t+1], self.alpha, self.beta)
+        self.sL[t+1] = np.random.binomial(1, self.rL[t+1] * self.delta_t)
+        
+        self.hR[t+1] = self.hR[t] + self.delta_t/self.tau * (-self.hR[t] + self.R * IR)
+        self.rR[t+1] = self.r_0 * g(self.hR[t+1], self.alpha, self.beta)
+        self.sR[t+1] = np.random.binomial(1, self.rR[t+1] * self.delta_t)
+    
+    def two_population_recurrent_input(self, x1, x2, S1, S2, J=ct.J, theta = 0):
+
+        mc = np.mean(np.cos(x1)*S1)
+        mc_opp = np.mean(np.cos(x2)*S2)
+        ms = np.mean(np.sin(x1)*S1)
+        ms_opp = np.mean(np.sin(x2)*S2)
+        I = J * (np.cos(x1+theta) * mc + np.sin(x1+theta) * ms)
+        I += J * (np.cos(x1+theta) * mc_opp + np.sin(x1+theta) * ms_opp)
+        # print(I)
+        
+        return I
+    
+    def external_input(self, t):
+        if 300<=t<600 :
+            I  = self.I0
+        else :
+            I = 0
+        return I
+        
+    def simulation(self, initial_voltage = uniform_voltage) : 
+    
+        self.hL, self.rL, self.sL = self.initialize_simulation()
+        self.hR, self.rR, self.sR = self.initialize_simulation()
+
+        # Initialize the position of each neuron
+        self.xL = self.initialize_positions()
+        self.xR = self.initialize_positions()
+        
+        self.hL[0, :], self.rL[0, :], self.sL[0, :] =  self.first_step_update(initial_voltage)
+        self.hR[0, :], self.rR[0, :], self.sR[0, :] =  self.first_step_update(initial_voltage)
+
+        for t in tqdm(range(self.hR.shape[0]-1)):
+            
+            IL = self.two_population_recurrent_input(self.xL, self.xR, self.sL[t]/self.delta_t, self.sR[t]/self.delta_t,  self.J, self.theta)
+            IR = self.two_population_recurrent_input(self.xR, self.xL, self.sR[t]/self.delta_t, self.sL[t]/self.delta_t, self.J, -self.theta)
+            
+            if self.I_ext:
+                IL -= self.external_input(t*self.delta_t) 
+                IR += self.external_input(t*self.delta_t)  
+                
+            self.update(t, IL, IR)
+
+        return self.hL, self.sL, self.hR, self.sR
+    
+
 def bins_spike (spikes, bins, delta_t= ct.delta_t, N=ct.N, mean = False):
     bins_size = int(bins/delta_t)
 
@@ -196,3 +318,21 @@ def get_theta_time_series(spikes, N = ct.N):
         theta_time_series.append(population_vector)
     
     return np.array(theta_time_series)
+
+# la consigne a changé ?????
+def get_bump(spikes, N = ct.N):
+    
+    x = np.linspace(0, 2*np.pi, N)
+    theta_time_series = []
+    
+    for t in range(spikes.shape[0]):
+        
+        angle = x[spikes[t] != 0]
+        # print(angle.shape)
+        
+        # Calculate the population vector
+        population_vector = np.arctan2(np.sum(np.sin(angle)), np.sum(np.cos(angle)))
+        if population_vector < 0:
+            population_vector += 2*np.pi
+        theta_time_series.append(population_vector)
+    return theta_time_series
