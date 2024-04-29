@@ -14,7 +14,7 @@ def g(h, alpha=ct.alpha, beta=ct.beta):
     return 1/(1 + np.exp(-2 * alpha * (h - beta)))
 
 class PoissonNeuron:
-    def __init__(self, N=ct.N, delta_t=ct.delta_t, tau=ct.tau, T=ct.T, R=ct.R, r_0=ct.r_0, alpha=ct.alpha, beta=ct.beta, J0=ct.J0, J1=ct.J1, sigma_w=ct.sigma_w, phi=0, J=ct.J, omega=None, I_0=None, mu1=ct.mu1, mu2=ct.mu2, sigma=ct.sigma, I_ext=False):
+    def __init__(self, N=ct.N, delta_t=ct.delta_t, tau=ct.tau, T=ct.T, R=ct.R, r_0=ct.r_0, alpha=ct.alpha, beta=ct.beta, J0=ct.J0, J1=ct.J1, sigma_w=ct.sigma_w, phi=0, J=ct.J, omega=ct.omega, I_0=ct.I_0, mu1=ct.mu1, mu2=ct.mu2, sigma=ct.sigma, I_ext=False):
         self.N = N
         self.delta_t = delta_t
         self.tau = tau
@@ -336,3 +336,35 @@ def get_bump(spikes, N = ct.N):
             population_vector += 2*np.pi
         theta_time_series.append(population_vector)
     return theta_time_series
+
+
+def smooth_random_trajectory(total_time, time_step, speed):
+    num_steps = int(total_time / time_step)
+    
+    # Initialize arrays to store positions and head directions
+    positions = np.zeros((num_steps+1, 2))
+    head_directions = np.zeros(num_steps+1)
+    
+    # Initial position and head direction
+    positions[0] = np.random.rand(2)  # Random initial position in [0, 1] x [0, 1]
+    head_directions[0] = np.random.uniform(0, 2*np.pi)  # Random initial head direction
+    
+    # Generate trajectory
+    for t in range(1, num_steps+1):
+        # Generate random step in polar coordinates (direction and magnitude)
+        theta = np.random.uniform(-np.pi/4, np.pi/4)  # Random direction within a narrow range
+        r = speed * time_step  # Magnitude of step
+        
+        # Update head direction
+        head_directions[t] = head_directions[t-1] + theta
+        
+        # Convert polar step to Cartesian step
+        dx = r * np.cos(head_directions[t])
+        dy = r * np.sin(head_directions[t])
+        
+        # Update position
+        positions[t] = positions[t-1] + np.array([dx, dy])
+    
+    return head_directions, positions
+
+
