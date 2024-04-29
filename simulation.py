@@ -15,21 +15,21 @@ def g(h, alpha=ct.alpha, beta=ct.beta):
 
 class PoissonNeuron:
     def __init__(self, N=ct.N, delta_t=ct.delta_t, tau=ct.tau, T=ct.T, R=ct.R, r_0=ct.r_0, alpha=ct.alpha, beta=ct.beta, J0=ct.J0, J1=ct.J1, sigma_w=ct.sigma_w, phi=0, J=ct.J, omega=ct.omega, I_0=ct.I_0, mu1=ct.mu1, mu2=ct.mu2, sigma=ct.sigma, I_ext=False):
-        self.N = N
-        self.delta_t = delta_t
-        self.tau = tau
-        self.T = T
-        self.R = R
-        self.r_0 = r_0
-        self.alpha = alpha
-        self.beta = beta
-        self.J0 = J0
+        self.N = N # Number of neurons
+        self.delta_t = delta_t # Time step size for simulation
+        self.tau = tau # Membrane time constant
+        self.T = T # Total simulation time
+        self.R = R # Resistance of the neuron
+        self.r_0 = r_0 # Sigmoid normalisation factor
+        self.alpha = alpha # Sigmoid parameter 1
+        self.beta = beta # Sigmoid parameter 2
+        self.J0 = J0 # Amplitude of the first Gaussian
         self.J1 = J1
         self.sigma_w = sigma_w
         self.phi = phi
-        self.J = J
-        self.omega = omega
-        self.I_0 = I_0
+        self.J = J # Interaction strength
+        self.omega = omega # Frequency of the input current
+        self.I_0 = I_0 # Amplitude of the input current
         self.mu1=mu1
         self.mu2=mu2
         self.sigma=sigma
@@ -320,21 +320,30 @@ def get_theta_time_series(spikes, N = ct.N):
     return np.array(theta_time_series)
 
 # la consigne a changé ?????
-def get_bump(spikes, N = ct.N):
-    
+def get_bump(spikes, N=ct.N):
+    """
+    Calculate the bump location for each time step based on the given spike data.
+
+    Parameters:
+    spikes (ndarray): Array of spike data.
+    N (int): Number of neurons.
+
+    Returns:
+    list: List of population bump location for each time step.
+    """
+
     x = np.linspace(0, 2*np.pi, N)
     theta_time_series = []
-    
+
     for t in range(spikes.shape[0]):
-        
         angle = x[spikes[t] != 0]
-        # print(angle.shape)
-        
+
         # Calculate the population vector
         population_vector = np.arctan2(np.sum(np.sin(angle)), np.sum(np.cos(angle)))
         if population_vector < 0:
             population_vector += 2*np.pi
         theta_time_series.append(population_vector)
+
     return theta_time_series
 
 
