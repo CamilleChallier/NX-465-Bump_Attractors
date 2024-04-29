@@ -23,17 +23,17 @@ class PoissonNeuron:
         self.r_0 = r_0 # Sigmoid normalisation factor
         self.alpha = alpha # Sigmoid parameter 1
         self.beta = beta # Sigmoid parameter 2
-        self.J0 = J0 # Amplitude of the first Gaussian
-        self.J1 = J1
-        self.sigma_w = sigma_w
-        self.phi = phi
+        self.J0 = J0 # Base interaction strength
+        self.J1 = J1 # Gaussian interaction term
+        self.sigma_w = sigma_w # Standard deviation of the Gaussian interaction
+        self.phi = phi # Position phase difference
         self.J = J # Interaction strength
         self.omega = omega # Frequency of the input current
         self.I_0 = I_0 # Amplitude of the input current
         self.mu1=mu1
         self.mu2=mu2
         self.sigma=sigma
-        self.I_ext = I_ext
+        self.I_ext = I_ext # External input flag
 
     def oscillating_input(self, t):
         """
@@ -72,24 +72,6 @@ class PoissonNeuron:
             I  = 1/(self.sigma * np.sqrt(2 * np.pi)) * np.exp(-((self.x - self.mu2) ** 2 / (2*self.sigma**2)))
         else :
             I = 0
-        return I
-
-    def recurrent_interactions_input(self, S):
-        """
-        Compute the input current for the neurons based on recurrent interactions.
-
-        Parameters:
-        - x (ndarray): Neuron positions.
-        - S (ndarray): Spike trains of the neurons.
-        - J (float): Interaction strength.
-
-        Returns:
-        - I (ndarray): Input current for the neurons.
-        """
-        mc = np.mean(np.cos(self.x)*S)
-        ms = 1/len(self.x)*(np.sin(self.x)@S)
-        I = self.J * (np.cos(self.x) * mc + np.sin(self.x) * ms)
-        
         return I
 
     def recurrent_interactions_input(self, S):
