@@ -121,7 +121,7 @@ class PoissonNeuron:
         self.x = np.linspace(0, 2*np.pi, self.N)
         if input_fct == self.line_input:
             x_reshaped = self.x.reshape(-1, 1)
-            self.gaussian = self.J0 + self.J1 * np.exp((-(x_reshaped-x_reshaped.T)**2)/(2*self.sigma_w**2))
+            self.gaussian = self.J0 + self.J1 * np.exp((-(x_reshaped-self.phi-x_reshaped.T)**2)/(2*self.sigma_w**2))
 
         self.h[0, :] = initial_voltage
         self.r[0, :] = self.r_0 * g(self.h[0, :])
