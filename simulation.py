@@ -89,24 +89,13 @@ class PoissonNeuron:
         mc = np.mean(np.cos(self.x)*S)
         ms = np.mean(np.sin(self.x)*S)
         I = self.J * (np.cos(self.x-self.phi) * mc + np.sin(self.x-self.phi) * ms)
-        # print(I)
-        
+
         return I
 
-    def line_input(self, x, S):
+    def line_input(self, S):
 
+        I = self.J / self.N * self.gaussian @ S 
 
-        gaussian = self.J0 + self.J1*np.exp((-(x-x.T)**2)/(2*self.sigma_w**2))
-        # print(gaussian.shape, S.shape)
-        I = self.J/len(x) * gaussian @ S
-        # print(gaussian[0,0:5])
-        # print(np.mean(gaussian))
-        # print((gaussian*S).shape)
-        # print(I[0])
-        
-        # pre = np.cos(x-x.T)
-        # I = J/len(x) * pre @ S
-        # print(pre)
         return I
 
 
@@ -130,6 +119,9 @@ class PoissonNeuron:
         self.s = np.zeros((int(self.T / self.delta_t), self.N))
 
         self.x = np.linspace(0, 2*np.pi, self.N)
+        if input_fct == self.line_input:
+            x_reshaped = self.x.reshape(-1, 1)
+            self.gaussian = self.J0 + self.J1 * np.exp((-(x_reshaped-x_reshaped.T)**2)/(2*self.sigma_w**2))
 
         self.h[0, :] = initial_voltage
         self.r[0, :] = self.r_0 * g(self.h[0, :])
@@ -144,7 +136,7 @@ class PoissonNeuron:
             elif input_fct == self.recurrent_interactions_input:
                 I = input_fct(self.s[t]/self.delta_t)
             elif input_fct == self.line_input:
-                I = input_fct(self.x.reshape(-1,1), self.s[t]/self.delta_t)   
+                I = input_fct(self.s[t]/self.delta_t)   
         
             else:
                 ValueError("Input function not recognized.")
