@@ -209,17 +209,16 @@ class TwoPopulationSimulation:
         self.rR[t+1] = self.r_0 * g(self.hR[t+1], self.alpha, self.beta)
         self.sR[t+1] = np.random.binomial(1, self.rR[t+1] * self.delta_t)
     
-    def two_population_recurrent_input(self, x1, x2, S1, S2, J=ct.J, theta = 0):
+    def two_population_recurrent_input(self, xL, xR, SL, SR, J=ct.J, theta = 0):
 
-        mc = np.mean(np.cos(x1)*S1)
-        mc_opp = np.mean(np.cos(x2)*S2)
-        ms = np.mean(np.sin(x1)*S1)
-        ms_opp = np.mean(np.sin(x2)*S2)
-        I = J * (np.cos(x1+theta) * mc + np.sin(x1+theta) * ms)
-        I += J * (np.cos(x1+theta) * mc_opp + np.sin(x1+theta) * ms_opp)
-        # print(I)
+        mcos_L = np.mean(np.cos(xL)*SL)
+        mcos_R = np.mean(np.cos(xR)*SR)
+        msin_L = np.mean(np.sin(xL)*SL)
+        msin_R = np.mean(np.sin(xR)*SR)
+        IL = J * (np.cos(xL+theta) * (mcos_L + mcos_R) + np.sin(xL+theta) * (msin_L + msin_R))
+        IR = J * (np.cos(xR-theta) * (mcos_L + mcos_R) + np.sin(xR-theta) * (msin_L + msin_R))
         
-        return I
+        return IL, IR
     
     def external_input(self, t):
         if 300<=t<600 :
@@ -242,8 +241,7 @@ class TwoPopulationSimulation:
 
         for t in tqdm(range(self.hR.shape[0]-1)):
             
-            IL = self.two_population_recurrent_input(self.xL, self.xR, self.sL[t]/self.delta_t, self.sR[t]/self.delta_t,  self.J, self.theta)
-            IR = self.two_population_recurrent_input(self.xR, self.xL, self.sR[t]/self.delta_t, self.sL[t]/self.delta_t, self.J, -self.theta)
+            IL, IR = self.two_population_recurrent_input(self.xL, self.xR, self.sL[t]/self.delta_t, self.sR[t]/self.delta_t,  self.J, self.theta)
             
             if self.I_ext:
                 IL -= self.external_input(t*self.delta_t) 
