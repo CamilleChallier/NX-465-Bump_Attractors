@@ -14,7 +14,11 @@ def g(h, alpha=ct.alpha, beta=ct.beta):
     return 1/(1 + np.exp(-2 * alpha * (h - beta)))
 
 class PoissonNeuron:
-    def __init__(self, N=ct.N, delta_t=ct.delta_t, tau=ct.tau, T=ct.T, R=ct.R, r_0=ct.r_0, alpha=ct.alpha, beta=ct.beta, J0=ct.J0, J1=ct.J1, sigma_w=ct.sigma_w, phi=0, J=ct.J, omega=ct.omega, I_0=ct.I_0, mu1=ct.mu1, mu2=ct.mu2, sigma=ct.sigma, I_ext=False):
+    def __init__(self, N=ct.N, delta_t=ct.delta_t, tau=ct.tau, 
+                 T=ct.T, R=ct.R, r_0=ct.r_0, alpha=ct.alpha, beta=ct.beta, 
+                 J0=ct.J0, J1=ct.J1, sigma_w=ct.sigma_w, phi=0, J=ct.J, 
+                 omega=ct.omega, I_0=ct.I_0, mu1=ct.mu1, mu2=ct.mu2, 
+                 sigma=ct.sigma, I_ext=False, theta_H=None):
         self.N = N # Number of neurons
         self.delta_t = delta_t # Time step size for simulation
         self.tau = tau # Membrane time constant
@@ -30,10 +34,11 @@ class PoissonNeuron:
         self.J = J # Interaction strength
         self.omega = omega # Frequency of the input current
         self.I_0 = I_0 # Amplitude of the input current
-        self.mu1=mu1
-        self.mu2=mu2
-        self.sigma=sigma
+        self.mu1=mu1 # External input parameter 1
+        self.mu2=mu2 # External input parameter 1
+        self.sigma=sigma # External input parameter 1
         self.I_ext = I_ext # External input flag
+        self.theta_H = theta_H # Head directions, same dims as x
 
     def oscillating_input(self, t):
         """
@@ -97,7 +102,10 @@ class PoissonNeuron:
         I = self.J / self.N * self.gaussian @ S 
 
         return I
+    
+    def head_external_input(self, theta_H):
 
+        return self.I_0 * np.cos(self.x-theta_H)
 
     def spike_simulation(self, input_fct, initial_voltage, theory = False) : 
         """
@@ -137,6 +145,8 @@ class PoissonNeuron:
                 I = input_fct(self.s[t]/self.delta_t)
             elif input_fct == self.line_input:
                 I = input_fct(self.s[t]/self.delta_t)   
+            elif input_fct == self.head_external_input:
+                I = input_fct(self.theta_H[t])
         
             else:
                 ValueError("Input function not recognized.")
@@ -184,11 +194,12 @@ class TwoPopulationSimulation:
         return np.random.uniform(0, 1, self.N) 
     
     def centered_voltage(self):
-        ## TODO : to implement
+        
         initial_voltage = np.linspace(0, 1, self.N)
         initial_voltage = 1 / (0.25*np.sqrt(2 * np.pi)) * np.exp(-0.5 * ((initial_voltage - 0.5) / 0.25) ** 2)
         initial_voltage = initial_voltage / np.max(initial_voltage)
         initial_voltage += np.random.uniform(-0.1, 0.1, self.N)
+
         return initial_voltage
 
     
@@ -252,7 +263,29 @@ class TwoPopulationSimulation:
         return self.hL, self.sL, self.hR, self.sR
     
 
+def bins_spike(spikes, bins, delta_t=ct.delta_t, N=ct.N, mean=False):
+    """
+    Bins the spike data into specified time intervals and calculates the sum or mean of spikes within each bin.
+
+    Parameters:
+    spikes (ndarray): Array of spike data.
+    bins (float): Size of each time bin in milliseconds.
+    delta_t (float, optional): Time step size. Defaults to ct.delta_t.
+    N (int, optional): Number of neurons. Defaults to ct.N.
+    mean (bool, optional): If True, calculates the mean of spikes within each bin. If False, calculates the sum. Defaults to False.
+
+    Returns:
+    ndarray: Binned spike data.
+
+    """
+    bins_size = int(bins / delta_t)
+    spikes = spikes.reshape((int(spikes.shape[0] // bins_size), bins_size, N))
+    if mean == True:
+        return np.mean(spikes, axis=1)
+    else:
+        return np.sum(spikes, axis=1)
 def bins_spike (spikes, bins, delta_t= ct.delta_t, N=ct.N, mean = False):
+
     bins_size = int(bins/delta_t)
 
     spikes = spikes.reshape((int(spikes.shape[0]//bins_size), bins_size, N))
@@ -291,7 +324,6 @@ def get_theta_time_series(spikes, N = ct.N):
     
     return np.array(theta_time_series)
 
-# la consigne a changé ?????
 def get_bump(spikes, N=ct.N):
     """
     Calculate the bump location for each time step based on the given spike data.
@@ -318,26 +350,25 @@ def get_bump(spikes, N=ct.N):
 
     return theta_time_series
 
-
-def smooth_random_trajectory(total_time, time_step, speed):
+def smooth_random_trajectory(total_time, time_step, speed, max_delta_theta):
     num_steps = int(total_time / time_step)
     
-    # Initialize arrays to store positions and head directions
-    positions = np.zeros((num_steps+1, 2))
-    head_directions = np.zeros(num_steps+1)
-    
-    # Initial position and head direction
+
+    positions = np.zeros((num_steps, 2))
+    head_directions = np.zeros(num_steps)
     positions[0] = np.random.rand(2)  # Random initial position in [0, 1] x [0, 1]
     head_directions[0] = np.random.uniform(0, 2*np.pi)  # Random initial head direction
     
     # Generate trajectory
-    for t in range(1, num_steps+1):
-        # Generate random step in polar coordinates (direction and magnitude)
-        theta = np.random.uniform(-np.pi/4, np.pi/4)  # Random direction within a narrow range
+    for t in range(1, num_steps):
+
+        # Generate random step in polar coordinates
+        theta = np.random.uniform(-max_delta_theta, max_delta_theta)  # Random direction within a narrow range
         r = speed * time_step  # Magnitude of step
-        
-        # Update head direction
+
         head_directions[t] = head_directions[t-1] + theta
+        # not needed because of cos invariance and better for angle smoothness
+        # head_directions[t] = head_directions[t] % (2 * np.pi) 
         
         # Convert polar step to Cartesian step
         dx = r * np.cos(head_directions[t])
