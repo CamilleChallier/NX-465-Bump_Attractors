@@ -7,7 +7,7 @@ class TwoPopulationSimulation:
     def __init__(self, N=ct.N, delta_t=ct.delta_t, tau=ct.tau, 
                  T=ct.T, R=ct.R, r_0=ct.r_0, alpha=ct.alpha, beta=ct.beta, 
                  J=ct.J, theta=ct.theta, I0 = 0, I_ext=False, 
-                 J_head=ct.J_head, head_population=None):
+                 J_head=ct.J_head, head_population=None, x=True):
         self.N = N
         self.delta_t = delta_t
         self.tau = tau
@@ -21,9 +21,12 @@ class TwoPopulationSimulation:
         self.I_ext = I_ext
         self.I0 = I0
         self.J_head = J_head
-        if head_population is not None: 
+        if head_population is not None and x==True: 
             self.w_head = np.cos(head_population.x)
-            self.I_head = self.J_head * np.mean(head_population.s*self.w_head, axis=1)
+            self.I_head = self.J_head * np.mean(head_population.s/self.delta_t * self.w_head, axis =1) # not sure of this formula
+        elif head_population is not None and x==False: 
+            self.w_head = np.sin(head_population.x)
+            self.I_head = self.J_head * np.mean(head_population.s/self.delta_t * self.w_head, axis =1)
         else: self.w_head = None
         
     def initialize_simulation(self):
@@ -100,16 +103,16 @@ class TwoPopulationSimulation:
         for t in tqdm(range(self.hR.shape[0]-1)):
             
             IL, IR = self.two_population_recurrent_input(self.xL, self.xR, self.sL[t]/self.delta_t, self.sR[t]/self.delta_t,  self.J, self.theta)
-            
+            # print(np.mean(IL), np.mean(IR))
             if self.I_ext:
                 IL -= self.external_input(t*self.delta_t) 
                 IR += self.external_input(t*self.delta_t)  
 
             if self.w_head is not None:
+                # print(self.I_head[t])
                 IL -= self.I_head[t]
                 IR += self.I_head[t]
 
             self.update(t, IL, IR)
-
         return self.hL, self.sL, self.hR, self.sR
     
