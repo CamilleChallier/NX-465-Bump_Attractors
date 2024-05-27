@@ -21,12 +21,12 @@ class TwoPopulationSimulation:
         self.I_ext = I_ext
         self.I0 = I0
         self.J_head = J_head
-        if head_population is not None : # and x==True: 
+        if head_population is not None and x==True: 
             self.w_head = np.cos(head_population.x)
             self.I_head = self.J_head * np.mean(head_population.s/self.delta_t * self.w_head, axis =1)
-        # elif head_population is not None and x==False: 
-        #     self.w_head = np.sin(head_population.x) #For the y direction need to take sin or still cos ?
-        #     self.I_head = self.J_head * np.mean(head_population.s/self.delta_t * self.w_head, axis =1)
+        elif head_population is not None and x==False: 
+            self.w_head = np.sin(head_population.x)
+            self.I_head = self.J_head * np.mean(head_population.s/self.delta_t * self.w_head, axis =1)
         else: self.w_head = None
         
     def initialize_simulation(self):
@@ -109,7 +109,7 @@ class TwoPopulationSimulation:
                 IR += self.external_input(t*self.delta_t)  
 
             if self.w_head is not None:
-                # print(self.I_head[t])
+                # print(np.mean(self.I_head[t]))
                 IL -= self.I_head[t]
                 IR += self.I_head[t]
 
