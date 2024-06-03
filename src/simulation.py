@@ -29,7 +29,7 @@ def bins_spike(spikes, bins, delta_t=ct.delta_t, N=ct.N, mean=False):
     """
     bins_size = int(bins / delta_t)
     spikes = spikes.reshape((int(spikes.shape[0] // bins_size), bins_size, N))
-    if mean == True:
+    if mean:
         return np.mean(spikes, axis=1)
     else:
         return np.sum(spikes, axis=1)
