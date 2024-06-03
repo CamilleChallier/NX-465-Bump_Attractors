@@ -30,6 +30,14 @@ class TwoPopulationSimulation:
         else: self.w_head = None
         
     def initialize_simulation(self):
+        """
+        Initialize the simulation arrays.
+        
+        Returns:
+        - h (ndarray): Membrane potential.
+        - r (ndarray): Firing rate.
+        - s (ndarray): Spike data.
+        """
         h = np.zeros((int(self.T/self.delta_t), self.N))
         r = np.zeros((int(self.T/self.delta_t), self.N))
         s = np.zeros((int(self.T/self.delta_t), self.N))
@@ -37,13 +45,31 @@ class TwoPopulationSimulation:
         return h, r, s
     
     def initialize_positions(self):
+        """
+        Initialize the position of each neuron.
+        
+        Returns:
+        - x (ndarray): Position of each neuron.
+        """
         x = np.linspace(0, 2*np.pi, self.N)
         return x
     
     def uniform_voltage(self):
+        """
+        Initialize the membrane potential of each neuron using a uniform distribution.
+        
+        Returns:
+        - ndarray: Initial membrane potential of each neuron.
+        """
         return np.random.uniform(0, 1, self.N) 
     
     def centered_voltage(self):
+        """
+        Initialize the membrane potential of each neuron using a centered Gaussian distribution.
+        
+        Returns:
+        - ndarray: Initial membrane potential of each neuron.
+        """
         
         initial_voltage = np.linspace(0, 1, self.N)
         initial_voltage = np.exp(-0.5 * ((initial_voltage - 0.5) / 0.05) ** 2)
@@ -53,6 +79,17 @@ class TwoPopulationSimulation:
 
     
     def first_step_update(self, initial_voltage):
+        """
+        Update the first step of the simulation.
+        
+        Parameters:
+        - initial_voltage (function): Function to initialize the membrane potential.
+        
+        Returns:
+        - h0 (ndarray): Initial membrane potential.
+        - r0 (ndarray): Initial firing rate.
+        - s0 (ndarray): Initial spike data.
+        """
         h0 =  initial_voltage()
         r0 = self.r_0 * g(h0, self.alpha, self.beta)
         s0 =  np.random.binomial(1, r0 * self.delta_t)
@@ -60,6 +97,14 @@ class TwoPopulationSimulation:
         return h0, r0, s0
     
     def update(self, t, IL, IR):
+        """
+        Update the simulation arrays.
+        
+        Parameters:
+        - t (int): Current time step.
+        - IL (ndarray): Left population input.
+        - IR (ndarray): Right population input.
+        """
 
         self.hL[t+1] = self.hL[t] + self.delta_t/self.tau * (-self.hL[t] + self.R * IL)
         self.rL[t+1] = self.r_0 * g(self.hL[t+1], self.alpha, self.beta)
@@ -70,6 +115,21 @@ class TwoPopulationSimulation:
         self.sR[t+1] = np.random.binomial(1, self.rR[t+1] * self.delta_t)
     
     def two_population_recurrent_input(self, xL, xR, SL, SR, J=ct.J, theta = 0):
+        """
+        Calculate the recurrent input for the two populations.
+        
+        Parameters:
+        - xL (ndarray): Position of the left population.
+        - xR (ndarray): Position of the right population.
+        - SL (ndarray): Spike data of the left population.
+        - SR (ndarray): Spike data of the right population.
+        - J (float): Synaptic strength.
+        - theta (float): Phase difference.
+        
+        Returns:
+        - IL (ndarray): Recurrent input for the left population.
+        - IR (ndarray): Recurrent input for the right population.
+        """
 
         mcos_L = np.mean(np.cos(xL)*SL)
         mcos_R = np.mean(np.cos(xR)*SR)
@@ -81,6 +141,15 @@ class TwoPopulationSimulation:
         return IL, IR
     
     def external_input(self, t):
+        """
+        Compute the external input current.
+        
+        Parameters:
+        - t (float): Current time.
+        
+        Returns:
+        - I (float): External input current.
+        """
         if 300<=t<600 :
             I  = self.I0
         else :
@@ -88,6 +157,18 @@ class TwoPopulationSimulation:
         return I
         
     def simulation(self, initial_voltage = uniform_voltage) : 
+        """
+        Run the simulation.
+        
+        Parameters:
+        - initial_voltage (function): Function to initialize the membrane potential.
+        
+        Returns:
+        - hL (ndarray): Membrane potential of the left population.
+        - sL (ndarray): Spike data of the left population.
+        - hR (ndarray): Membrane potential of the right population.
+        - sR (ndarray): Spike data of the right population.
+        """
     
         self.hL, self.rL, self.sL = self.initialize_simulation()
         self.hR, self.rR, self.sR = self.initialize_simulation()

@@ -2,12 +2,16 @@ import numpy as np
 import constant as ct
 
 def g(h, alpha=ct.alpha, beta=ct.beta):
-    '''This function calculates the value of the transfer function g(h) of Poisson neurons given the values of h, alpha, and beta.
+    '''
+    This function calculates the value of the transfer function g(h) of Poisson neurons given the values of h, alpha, and beta.
     
     Parameters:
-    h (np.ndarray): The potential of every neuron
-    alpha (float): The value of alpha used in the transfer function.
-    beta (float): The value of beta used in the transfer function.
+    - h (np.ndarray): The potential of every neuron
+    - alpha (float): The value of alpha used in the transfer function.
+    - beta (float): The value of beta used in the transfer function.
+    
+    Returns:
+    - np.ndarray: The value of the transfer function g(h) for every neuron.
     '''
 
     return 1/(1 + np.exp(-2 * alpha * (h - beta)))
@@ -17,15 +21,14 @@ def bins_spike(spikes, bins, delta_t=ct.delta_t, N=ct.N, mean=False):
     Bins the spike data into specified time intervals and calculates the sum or mean of spikes within each bin.
 
     Parameters:
-    spikes (ndarray): Array of spike data.
-    bins (float): Size of each time bin in milliseconds.
-    delta_t (float, optional): Time step size. Defaults to ct.delta_t.
-    N (int, optional): Number of neurons. Defaults to ct.N.
-    mean (bool, optional): If True, calculates the mean of spikes within each bin. If False, calculates the sum. Defaults to False.
+    - spikes (ndarray): Array of spike data.
+    - bins (float): Size of each time bin in milliseconds.
+    - delta_t (float, optional): Time step size. Defaults to ct.delta_t.
+    - N (int, optional): Number of neurons. Defaults to ct.N.
+    - mean (bool, optional): If True, calculates the mean of spikes within each bin. If False, calculates the sum. Defaults to False.
 
     Returns:
     ndarray: Binned spike data.
-
     """
     bins_size = int(bins / delta_t)
     spikes = spikes.reshape((int(spikes.shape[0] // bins_size), bins_size, N))
@@ -43,26 +46,6 @@ def get_orientation(idx_list, N):
     preferred_directions = 180 * (idx_list*2+1) / N # ?? not sure
     
     return preferred_directions
-
-def get_theta_time_series(spikes, N = ct.N):
-
-    theta_time_series = []
-    
-    for t in range(spikes.shape[0]):
-        idx_list = np.arange(N) # not sure what idx_list is supposed to be. Took all neurons but supposed to take only the ones that spiked?
-        
-        # Calculate the preferred direction for each neuron index
-        preferred_directions = get_orientation(idx_list, N)
-        
-        # Calculate the spike count for each neuron index at time t
-        spike_counts = spikes[t, idx_list]
-        
-        # Calculate the population vector
-        population_vector = np.mean(preferred_directions[spike_counts != 0]/(spike_counts[spike_counts != 0]))
-
-        theta_time_series.append(population_vector)
-    
-    return np.array(theta_time_series)
 
 def get_bump(spikes, N=ct.N):
     """
@@ -91,6 +74,19 @@ def get_bump(spikes, N=ct.N):
     return theta_time_series
 
 def smooth_random_trajectory(total_time, time_step, speed, max_delta_theta):
+    """
+    Generate a smooth random trajectory with a given speed and maximum change in head direction.
+    
+    Parameters:
+    - total_time (float): Total time of the trajectory in seconds.
+    - time_step (float): Time step of the trajectory in seconds.
+    - speed (float): Speed of the trajectory in units per second.
+    - max_delta_theta (float): Maximum change in head direction in radians. 
+    
+    Returns:
+    - head_directions (ndarray): Head directions over time.
+    - positions (ndarray): Positions over time.
+    """
     num_steps = int(total_time / time_step)
     
 

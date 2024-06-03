@@ -36,8 +36,6 @@ class PoissonNeuron:
 
         Parameters:
         - t (ndarray): time points.
-        - omega (float): Frequency of the input current.
-        - I_0 (float): Amplitude of the input current.
 
         Returns:
         - I (ndarray): input current for the neurons.
@@ -52,10 +50,6 @@ class PoissonNeuron:
 
         Parameters:
         - t (ndarray): time points.
-        - x (ndarray): Neuron positions.
-        - mu1 (float): Mean of the first Gaussian.
-        - mu2 (float): Mean of the second Gaussian.
-        - sigma (float): Standard deviation of the Gaussians.
 
         Returns:
         - I (ndarray): input current for the neurons.
@@ -74,9 +68,7 @@ class PoissonNeuron:
         Compute the input current for the neurons based on recurrent interactions with a small angle phi.
 
         Parameters:
-        - x (ndarray): Neuron positions.
         - S (ndarray): Spike trains of the neurons.
-        - J (float): Interaction strength.
 
         Returns:
         - I (ndarray): Input current for the neurons.
@@ -88,12 +80,30 @@ class PoissonNeuron:
         return I
 
     def line_input(self, S):
+        """
+        Compute the input current for the neurons based on linear interactions.
+        
+        Parameters:
+        - S (ndarray): Spike trains of the neurons.
+        
+        Returns:
+        - I (ndarray): Input current for the neurons.        
+        """
 
         I = self.J / self.N * self.gaussian @ S 
 
         return I
     
     def head_external_input(self, theta_H):
+        """
+        Compute the input current for the neurons based on head direction.
+        
+        Parameters:
+        - theta_H (ndarray): Head directions.
+        
+        Returns:
+        - I (ndarray): Input current for the neurons.
+        """
 
         return self.I_0 * np.cos(self.x-theta_H)
 
@@ -102,15 +112,13 @@ class PoissonNeuron:
         Simulates spike generation in a population of neurons.
 
         Parameters:
-        - N (int): Number of neurons in the population.
-        - delta_t (float): Time step size for simulation.
-        - tau (float): Membrane time constant.
-        - T (float): Total simulation time.
-        - R (float): Resistance of the neuron.
+        - input_fct (function): function to compute the input current for the neurons.
+        - initial_voltage (ndarray): initial membrane potential of the neurons.
+        - theory (bool): flag to return the theoretical spike rate.
 
         Returns:
         - h (ndarray): membrane potential of each neuron over time.
-        - mean_spikes (ndarray): mean spike occurence over 1 ms bins.
+        - s (ndarray): spike trains of the neurons.
         """
         self.h = np.zeros((int(self.T / self.delta_t), self.N))
         self.r = np.zeros((int(self.T / self.delta_t), self.N))

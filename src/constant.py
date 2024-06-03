@@ -8,7 +8,7 @@ T=1000 #ms
 R=1 #MOhm
 r_0=1 #ms
 I_0=2 #nA
-omega=1 #ms-1
+omega=0.01 #rad/ms
 
 J = 5 #pC
 mu1 = 2*np.pi/3
