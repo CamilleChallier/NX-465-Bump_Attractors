@@ -12,3 +12,11 @@ The project is structured in the following files: \
 `src/TwoPopulationSimulation.py`: implementation for two population networks\
 `src/simulation.py`: contains useful functions related to bump attractor simulations \
 `src/constant.py`: file with all the constants used for the experiments
+
+
+### Results
+Simulation of the activity of the network for the
+whole trajectory. Parameters : N=300, Jhead = 1.75 pC.(a) Mean bump location of the right and left populations in the two position integrators over time. (b) x and y position of the ants over time. (c) Bump Location θbump and Current Head Direction θH in Head Direction Cells Simulation. (d)(e) Bump location as a function of the position and its
+linear fit. (f) Decoded and original trajectory.
+
+![Alt Text](plots/3_5.png)
