@@ -46,9 +46,8 @@ class TwoPopulationSimulation:
     def centered_voltage(self):
         
         initial_voltage = np.linspace(0, 1, self.N)
-        initial_voltage = 1 / (0.25*np.sqrt(2 * np.pi)) * np.exp(-0.5 * ((initial_voltage - 0.5) / 0.25) ** 2)
-        initial_voltage = initial_voltage / np.max(initial_voltage)
-        initial_voltage += np.random.uniform(-0.1, 0.1, self.N)
+        initial_voltage = np.exp(-0.5 * ((initial_voltage - 0.5) / 0.05) ** 2)
+        # initial_voltage += np.random.uniform(-0.1, 0.1, self.N)
 
         return initial_voltage
 
@@ -56,7 +55,7 @@ class TwoPopulationSimulation:
     def first_step_update(self, initial_voltage):
         h0 =  initial_voltage()
         r0 = self.r_0 * g(h0, self.alpha, self.beta)
-        s0 =  np.random.binomial(1,r0 * self.delta_t)
+        s0 =  np.random.binomial(1, r0 * self.delta_t)
         
         return h0, r0, s0
     
@@ -100,7 +99,7 @@ class TwoPopulationSimulation:
         self.hL[0, :], self.rL[0, :], self.sL[0, :] =  self.first_step_update(initial_voltage)
         self.hR[0, :], self.rR[0, :], self.sR[0, :] =  self.first_step_update(initial_voltage)       
 
-        for t in tqdm(range(self.hR.shape[0]-1)):
+        for t in range(self.hR.shape[0]-1):
             
             IL, IR = self.two_population_recurrent_input(self.xL, self.xR, self.sL[t]/self.delta_t, self.sR[t]/self.delta_t,  self.J, self.theta)
             # print(np.mean(IL), np.mean(IR))
