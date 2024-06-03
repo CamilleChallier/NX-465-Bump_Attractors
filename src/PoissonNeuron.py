@@ -127,7 +127,7 @@ class PoissonNeuron:
         self.s[0, :] = np.random.binomial(1, self.r[0] * self.delta_t)
 
 
-        for t in tqdm(range(self.h.shape[0]-1)):
+        for t in range(self.h.shape[0]-1):
             
             #compute current
             if input_fct == self.oscillating_input:
